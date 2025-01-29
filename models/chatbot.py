@@ -13,10 +13,7 @@ class CryptoChatbot:
     def __init__(self, api_key, model_path="models/saved"):
         self.api_key = api_key
         self.model_path = model_path
-        if os.path.exists(model_path):
-            self.load_model()
-        else:
-            self.setup_model()
+        self.setup_model()
         
     def setup_model(self):
         self.client = qdrant_client.QdrantClient(path=f"qdrant_gemini_{datetime.now().timestamp()}")
@@ -30,7 +27,13 @@ class CryptoChatbot:
             model_name="models/embedding-001",
             api_key=self.api_key
         )
-        Settings.llm = Gemini(api_key=self.api_key)
+
+        # Settings.llm = Gemini(api_key=self.api_key)
+        Settings.llm = Gemini(
+            api_key=self.api_key,
+            temperature=0.3,
+            request_timeout=60.0
+        )
         
         # Set up storage context
         self.storage_context = StorageContext.from_defaults(
@@ -84,9 +87,11 @@ class CryptoChatbot:
             if not self.load_model():
                 raise Exception("Model not trained yet!")
         
-        print(question)
+        # print(question)
         query_engine = self.index.as_query_engine(
             text_qa_template=self.qa_template
         )
         response = query_engine.query(question)
+        print(response)
+
         return str(response)
